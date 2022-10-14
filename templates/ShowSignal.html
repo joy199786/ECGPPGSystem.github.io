@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Test Firebase</title>     
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.16.0/math.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/6.3.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/6.0.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.12.1/firebase.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.12.1/firebase-firestore.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+</head>
+<body>
+<!--
+<div >
+    <iframe style='width: 100%;'src="{{ url_for('static', filename='showWeb.html')}}"  ></iframe>
+</div>
+-->
+
+
+<button onclick="StopChar()">Stop</button>
+<button onclick="window.location.href='{{ url_for("ClearAll") }}'">Clear</button>
+
+<div id="chart"></div>
+
+<!-- The core Firebase JS SDK is always required and must be listed first -->
+<!-- <script src="https://www.gstatic.com/firebasejs/6.0.1/firebase-database.js"></script> -->
+
+<!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#config-web-app -->
+
+<script>
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+    apiKey: "AIzaSyBq-8HojfR-eI9HmCWOLskkIxb6hhC4J_M",
+    authDomain: "showsignalonweb.firebaseapp.com",
+    databaseURL: "https://showsignalonweb-default-rtdb.firebaseio.com",
+    projectId: "showsignalonweb",
+    storageBucket: "showsignalonweb.appspot.com",
+    messagingSenderId: "427435107006",
+    appId: "1:427435107006:web:53b9595b7220b94ac2f4ef",
+    measurementId: "G-Y1R5T7X4DH"
+    };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  var firestore = firebase.firestore();
+  var database = firebase.database();
+
+    var AllData = []  
+	//ECG value
+    var ECGValue = []
+    var StdValue = []
+	var ECGIndex = 0
+	var PeakAmp = []
+    var PeakPosition = []
+	var RRI = []
+    var fs = 250
+    var xaxisLen = 2500
+    
+    //console.log(database);
+	function InitializeAll(){
+        AllData = []
+        var index = 0
+		var refFirestore = firestore.collection('Signal');
+        RemoveAllData();
+	}
+	var cnt = 0;
+    var cnt_ecg = 0;
+    var Time = []
+    var dataIndex = 0;
+    //var interval = setInterval(function(){
+          //database.ref().set(Math.random());
+        //database.ref().push(Math.random());
+    database.ref().on('child_added', function(snapshot) {
+        //console.log(snapshot.key)
+        //const date = new Date();
+        //console.log(date)
+        //All data沒有push完執行改變ECG會導致沒有加入AllData而缺少data
+        AllData.push(snapshot.val());
+        
+        //dataIndex++;
+        //Time.push(date.getMinutes()+":"+date.getSeconds()+":"+date.getMilliseconds());
+        // console.log(Time)
+        //console.log(snapshot.val());
+        //Plotly.extendTraces('chart',{ y:[[snapshot.val()]]}, [0]);
+        // if(AllData.length > 2005){
+        //     AllData = []
+        //     cnt++;
+        // }
+    });
+        //console.log(AllData);
+    var x_index = 0;
+    // var layout = {
+    //         xaxis: {range: [0,2500]},
+    //         yaxis: {range: [-1, 1], title: "Amp."},
+    //         //title: "House Prices vs. Size"
+    //     };
+    var interval = setInterval(function(){
+       
+        // if(cnt > 0){
+        //     var layout = {
+        //         xaxis: {range: [cnt*2500,(cnt+1)*2400]},
+        //         //yaxis: {range: [-1, 1], title: "Amp."},
+        //         //title: "House Prices vs. Size"
+        //     };
+        // }
+        // else{
+        //console.log(Time);
+        var layout = {
+            xaxis: {range: [1,xaxisLen]},
+            yaxis: {range: [-1, 1], title: "Amp."},
+            //title: "House Prices vs. Size"
+        }
+        // console.log(AllData);
+        
+        Plotly.newPlot('chart',[{
+                //x:Time,
+                y: AllData,
+                mode: 'markers',
+                type: 'scatter',
+                marker: { size: 2 },
+        }],layout);
+        if(AllData.length > xaxisLen){
+            AllData = []
+            //Time =[]
+            cnt++;
+        }
+        /*
+        Plotly.extendTraces('chart',{ y:[AllData.slice(AllData.length-1000,AllData.length)]}, [0]);
+                cnt++;
+                if(cnt > 1000) {
+                    Plotly.relayout('chart',{
+                        xaxis: {
+                            range: [cnt-1000,cnt]
+                        }
+                    });
+                }
+        */
+    }, 100);
+
+ 
+
+
+    //button
+    function StopChar() {
+        clearInterval(interval);
+    }
+
+    //<button onclick="RemoveAllData()">Clear</button>
+    function RemoveAllData(){
+        database.ref().set('/', null);
+        Plotly.newPlot('chart',[{
+            y:[],
+            mode:'line'
+        }]);
+    }
+	
+
+	window.onload = InitializeAll;
+  </script>
+</body>
+</html>

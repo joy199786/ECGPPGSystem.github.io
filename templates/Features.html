@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Test Firebase</title>     
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.16.0/math.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/6.3.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/6.0.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.12.1/firebase.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.12.1/firebase-firestore.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+</head>
+<body>
+<!--
+<div >
+    <iframe style='width: 100%;'src="{{ url_for('static', filename='showWeb.html')}}"  ></iframe>
+</div>
+<div>
+    <iframe scrolling="no" width="100%" height="450" src="showWeb.html" ></iframe>
+</div>
+-->
+<div id = "AlertMessnge" class="alert">
+    <strong>{{Warning}}</strong>
+</div>
+<form action="{{ url_for('Input_Freq') }}" method="post">
+    <input type="text" name="frequency">
+    <input type="submit" value="改變頻率">
+</form>
+<button id="ChangeECG" type="hidden" onclick="window.location.href='{{ url_for("change_ECG_value") }}'"></button>
+
+<button onclick="StopChar()">Stop</button>
+<button id="clear" onclick="window.location.href='{{ url_for("ClearAll") }}'">Clear</button>
+
+<div id="ECGChart"></div>
+<table id="tableSelect">
+    <thead>
+    <tr>
+        <td >心情: </td>
+        <td>{{mood}}</td>
+        </tr>
+    <tr id="SDSD">
+      <td >SDNN: </td>
+      <td id="SDNNValue">{{SDNN}}</td>
+    </tr>
+    <tr>
+        <td >SDSD: </td>
+        <td>{{SDSD}}</td>
+      </tr>
+      <tr>
+        <td >RMSSD: </td>
+        <td >{{RMSSD}}</td>
+      </tr>
+      <tr>
+        <td >VLF: </td>
+        <td >{{VLF}}</td>
+      </tr>
+      <tr>
+        <td >LF: </td>
+        <td >{{LF}}</td>
+      </tr>
+      <tr>
+        <td >HF: </td>
+        <td >{{HF}}</td>
+      </tr>
+      <tr>
+        <td >TP: </td>
+        <td >{{TP}}</td>
+      </tr>
+    </thead>
+ </table>
+<!-- The core Firebase JS SDK is always required and must be listed first -->
+<!-- <script src="https://www.gstatic.com/firebasejs/6.0.1/firebase-database.js"></script> -->
+
+<!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#config-web-app -->
+
+<script>
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+    apiKey: "AIzaSyBq-8HojfR-eI9HmCWOLskkIxb6hhC4J_M",
+    authDomain: "showsignalonweb.firebaseapp.com",
+    databaseURL: "https://showsignalonweb-default-rtdb.firebaseio.com",
+    projectId: "showsignalonweb",
+    storageBucket: "showsignalonweb.appspot.com",
+    messagingSenderId: "427435107006",
+    appId: "1:427435107006:web:53b9595b7220b94ac2f4ef",
+    measurementId: "G-Y1R5T7X4DH"
+    };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  var firestore = firebase.firestore();
+  var database = firebase.database();
+  var refFirestore = firestore.collection('Signal');
+  var index = 0
+    var AllData = []  
+    //ECG value
+    var ECGValue = []
+    var StdValue = []
+    var ECGIndex = 0
+    var PeakAmp = []
+    var PeakPosition = []
+    var RRI = []
+    var fs = 250
+    var SDNNArray = []
+
+
+    //console.log(database);
+	function InitializeAll(){
+        AllData = []
+        var Row = document.getElementById("SDSD"); 
+        var Cells = Row.getElementsByTagName("td"); 
+        SDNNArray.push(parseFloat(Cells[1].innerText))
+        console.log(SDNNArray); 
+        // Plotly.newPlot('SDNNchart',[{
+        //     y:SDNNArray,
+        //     mode: 'markers',
+        //     marker: { size: 10 },
+        // }]);
+        /*
+		database.ref().once('value',function(snapshot){
+                //return snapshot.val();
+                snapshot.forEach(function (item) {
+                    AllData.push(item.val());
+                    //console.log(dt.getSeconds());
+                })
+            console.log(AllData);
+            if(AllData.length > 2000){
+            
+                    var layout = {
+                        xaxis: {range: [AllData.length-2000,AllData.length]},
+                        //yaxis: {range: [-1, 1], title: "Amp."},
+                        //title: "House Prices vs. Size"
+                    };
+                }
+            else{
+                var layout = {
+                    xaxis: {range: [0,2000]},
+                    //yaxis: {range: [-1, 1], title: "Amp."},
+                    //title: "House Prices vs. Size"
+                };
+            }
+            Plotly.newPlot('chart',[{    
+                    y: AllData,
+                    type: 'scatter'
+            }],layout);
+		})
+		*/
+        /*
+        refFirestore.get().then(querySnapshot => {
+            querySnapshot.forEach(doc => {
+                ECGValue.push(doc.data()["ECG"]); 
+                console.log(ECGValue)
+            });
+            Plotly.newPlot('ECGChart',[{
+                y:ECGValue,
+                type:'line'
+            }]);
+        });
+        */
+		//console.log(AllData);
+		/*
+		Plotly.newPlot('chart',[{
+			y: AllData,
+			type:'line'
+		}]);
+		*/
+		//console.log(ECGValue)
+		//console.log(Object.values(ECGValue).map(item => item.ECG));
+		//console.log(ECGValue.map(item => Object.keys(item)[0]));
+	}
+	var cnt = 0;
+    var cnt_ecg = 0;
+    var Time = []
+    var dataIndex = 0;
+    //var interval = setInterval(function(){
+          //database.ref().set(Math.random());
+        //database.ref().push(Math.random());
+    /*
+    database.ref().on('child_added', function(snapshot) {
+        //console.log(snapshot.key)
+        const date = new Date();
+        //All data沒有push完執行改變ECG會導致沒有加入AllData而缺少data
+        AllData.push(snapshot.val());
+        dataIndex++;
+        Time.push(date.getMinutes()+":"+date.getSeconds()+":"+date.getMilliseconds());
+        //console.log(Time)
+        //console.log(snapshot.val());
+        //Plotly.extendTraces('chart',{ y:[[snapshot.val()]]}, [0]);
+    });
+    */
+        //console.log(AllData);
+    var x_index = 0;
+
+    /*
+    function detectPeaks(arr) {
+        //let positions = []
+        //let maximas = []
+        PeakAmp = []
+        PeakPosition = []
+        var PrePeakPosition = 0
+        for (let i = 1; i < arr.length - 1; i++) {
+            if(arr[i] > math.mean(arr))
+                if (arr[i] >= arr[i - 1] && arr[i] >= arr[i + 1]) {
+                    if ((i-PrePeakPosition) > fs*0.6) {
+                        PeakPosition.push(i)
+                        PeakAmp.push(arr[i])
+                        PrePeakPosition = i;
+                    }
+                    
+                }
+        }
+
+    }
+    */
+    //frequency domain
+
+    /*
+    function PPIFunction(PeakPosition, PeakAmp){
+
+        var j=1;
+        for(i=0; i<PeakPosition.length-1; i++){
+            pp_interval = PeakPosition[i+1] - PeakPosition[i];
+            RRI[i] = pp_interval/fs;    
+        }
+        //console.log(RRI)
+        
+    }
+    */
+   
+    
+    //在javascript中計算特徵
+    var refFirestore = firestore.collection('Signal');
+    setInterval(function(){
+        /*
+        console.log(RRI);
+        AllData.length>2000? detectPeaks(AllData.slice(AllData.length-2000,AllData.length)):detectPeaks(AllData);
+        //detectPeaks(AllData);
+        PPIFunction(PeakPosition, PeakAmp);
+        // compute sdnn
+        var sdnn = 0;
+        var squre=0;
+        for(i=0; i< RRI.length; i++){
+            squre += math.pow(RRI[i]-math.mean(RRI),2);
+        }
+        sdnn=math.pow((squre/RRI.length),(0.5))
+        console.log("sdnn "+sdnn);
+
+        //compute sdsd
+        var sdsd = 0;
+        var ppi_sub=[]
+        for(i=0; i<RRI.length-1; i++){
+            ppi_sub.push(RRI[i+1]-RRI[i]);
+            //console.log("ppi_sub: "+RRI[i+1]-RRI[i])
+        }
+        squre=0;
+        for(i=0; i<ppi_sub.length; i++){
+            squre += math.pow(ppi_sub[i]-math.mean(ppi_sub),2);
+        }
+        sdsd=math.pow((squre/RRI.length),(0.5))
+        console.log("sdsd "+sdsd);
+
+        //compute RMSSD
+        ppi_subsqure=ppi_sub.map(function(x) { return math.pow(x, 2) });
+        RMSSD=ppi_subsqure.reduce((partialSum, a) => partialSum + a, 0)/ppi_subsqure.length;
+        console.log("RMSSD "+RMSSD);
+        */
+        document.getElementById("ChangeECG").click();
+
+    }, 5000);
+
+
+    //button
+    function StopChar() {
+        clearInterval(interval);
+    }
+
+    //<button onclick="RemoveAllData()">Clear</button>
+    function RemoveAllData(){
+        database.ref().set('/', null);
+        Plotly.newPlot('chart',[{
+            y:[],
+            mode:'line'
+        }]);
+    }
+	
+
+    function ChangeECG(){
+        //<button onclick="window.location.href='{{ url_for("change_ECG_value") }}'">ECG平均</button>
+        var fso = new ActiveXObject("Scripting.FileSystemObject");
+        var f=fso.createtextfile("TestData.txt",2,true);
+        const jsonContent = JSON.stringify(AllData);
+        f.writeLine(jsonContent);
+
+        // fs.writeFile("./data.json", jsonContent, 'utf8', function (err) {
+        //     if (err) {
+        //         return console.log(err);
+        //     }
+        //     console.log("The file was saved!");
+        // }); 
+        // $.ajax({
+        //     type: "POST",
+        //     url: '{{ url_for("change_ECG_value") }}',
+        //     contentType: "application/json",
+        //     data: JSON.stringify(AllData),
+        //     dataType: "json",
+        //     // success: function(response) {
+        //     //     console.log(response);
+        //     // },
+        //     // error: function(err) {
+        //     //     console.log(err);
+        //     // }
+        // });
+    }
+
+	window.onload = InitializeAll;
+  </script>
+</body>
+</html>

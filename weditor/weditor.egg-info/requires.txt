@@ -1,0 +1,8 @@
+tornado>=4.3
+six
+pillow
+logzero
+cached_property
+pywin32
+uiautomator2>=2.10.1
+facebook-wda>=1.0.5
